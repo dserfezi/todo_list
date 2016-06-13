@@ -1,0 +1,371 @@
+@extends->layout
+
+@section->main_content
+
+<div class="row row-centered">
+    <div class="col-xs-10 col-md-10 col-lg-8 col-xs-offset-1 col-md-offset-1 col-lg-offset-2 col-centered">
+        <div class="big-title">
+            <div class="big-title-content"><?php echo $listData['name']; ?></div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row row-centered">
+    <div class="col-xs-10 col-md-2 col-lg-2 col-xs-offset-1 col-md-offset-1 col-lg-offset-1">
+        <div class="panel panel-default">
+            <div class="panel-heading">Name</div>
+            <div class="panel-body"><?php echo $listData['name']; ?></div>
+        </div>
+    </div>
+    <div class="col-xs-10 col-md-2 col-lg-2 col-xs-offset-1 col-md-offset-0 col-lg-offset-0">
+        <div class="panel panel-default">
+            <div class="panel-heading">Created</div>
+            <div class="panel-body"><?php echo $listData['created_at']; ?></div>
+        </div>
+    </div>
+    <div class="col-xs-10 col-md-2 col-lg-2 col-xs-offset-1 col-md-offset-0 col-lg-offset-0">
+        <div class="panel panel-default">
+            <div class="panel-heading">Tasks</div>
+            <div class="panel-body js-tasks"><?php echo isset($listData['tasks']) ? $tasks = count($listData['tasks']) : 0; ?></div>
+        </div>
+    </div>
+    <div class="col-xs-10 col-md-2 col-lg-2 col-xs-offset-1 col-md-offset-0 col-lg-offset-0">
+        <div class="panel panel-default">
+            <div class="panel-heading">Undone Tasks</div>
+            <div class="panel-body js-undone">
+                <?php
+                    $undone = 0;
+                    if(isset($tasks)) {
+                        $statuses = array();
+                        foreach ($listData['tasks'] as $task) {
+                            $statuses[] = $task['status'];
+                        }
+                        $undone = count(array_keys($statuses, 1));
+                        echo $undone;
+                    } else {
+                        echo $undone;
+                    }
+                ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-xs-10 col-md-2 col-lg-2 col-xs-offset-1 col-md-offset-0 col-lg-offset-0">
+        <div class="panel panel-default">
+            <div class="panel-heading">Completed</div>
+            <div class="panel-body js-completed">
+                <?php echo isset($tasks) ? round((($tasks-$undone)/$tasks)*100).' %' : 0; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-xs-10 col-md-10 col-lg-8 col-xs-offset-1 col-md-offset-1 col-lg-offset-2">
+        <div class="form-group pull-right">
+            <label for="sort-by">Sort by:</label>
+            <select class="form-control" id="sort-by">
+                <option value="name">Name</option>
+                <option value="priority">Priority</option>
+                <option value="deadline">Deadline</option>
+                <option value="status">Status</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+
+<div class="row row-centered">
+    <div class="col-xs-10 col-md-10 col-lg-8 col-xs-offset-1 col-md-offset-1 col-lg-offset-2 col-centered">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Priority</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                        <th>Days remaining (+) / exceeded (-)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if(isset($listData['tasks'])){ ?>
+                        <?php $taskId = 1; ?>
+                        <?php foreach ($listData['tasks'] as $task) { ?>
+                            <tr>
+                                <td class="hidden"><?php echo $task['id']; ?></td>
+                                <td class="table-task-id"><?php echo $taskId; ?></td>
+                                <td><?php echo $task['name']; ?></td>
+                                <td><?php echo $task['priority']; ?></td>
+                                <td><?php echo date("d.m.Y", strtotime($task['deadline'])); ?></td>
+                                <td><?php echo ($task['status']==2) ? 'Done' : 'Undone'; ?></td>
+                                <td>
+                                    <?php
+                                    if($task['status']==2){
+                                        // If task is done, this is unnecessary
+                                        echo '';
+                                    } else {
+                                        // Calculate date difference
+                                        $diffNow = new DateTime(date('Y-m-d'));
+                                        $diffDeadline  = new DateTime(date('Y-m-d', strtotime($task['deadline'])));
+                                        $difference = $diffNow->diff($diffDeadline);
+                                        echo $difference->format('%R').$difference->days;
+                                    }
+                                    ?>
+                                </td>
+                                <td class="action-icons">
+                                    <a href="/task-edit/<?php echo $task['id']; ?>">
+                                        <span class="action-icon">
+                                            <i class="fa fa-pencil-square-o"></i>
+                                        </span class="action-icon">
+                                    </a>
+                                    <a href="/task-delete/<?php echo $task['id']; ?>">
+                                        <span class="action-icon">
+                                            <i class="fa fa-times"></i>
+                                        </span>
+                                    </a>
+                                </td>
+                            </tr>
+                            <?php $taskId++; ?>
+                        <?php } // end foreach ?>
+                    <?php } // end if ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-xs-10 col-md-1 col-lg-1 col-xs-offset-1 col-md-offset-1 col-lg-offset-2 col-centered">
+        <a href="#" class="btn btn-primary js-new-task">Create task</a>
+    </div>
+    <div class="col-xs-10 col-md-1 col-lg-1 col-xs-offset-1 col-centered">
+        <a href="/list-delete/<?php echo $listData['id']; ?>" class="btn btn-danger js-list-delete">Delete this list</a>
+    </div>
+</div>
+
+<div class="row row-centered js-ajax-info" style="display: none;">
+    <div class="col-xs-10 col-md-6 col-lg-4 col-xs-offset-1 col-md-offset-3 col-lg-offset-4 col-centered">
+        <div class="alert alert-info">
+            <p></p>
+        </div>
+    </div>
+</div>
+
+<?php //echo '<pre>'; print_r($listData); echo '</pre>'; ?>
+
+
+@section->footer_scripts
+
+<script type="text/javascript">
+    $(function(){
+
+        // Create new task form
+        $('.js-new-task').click(function(){
+            var newRow = '<tr><td></td>';
+            newRow += '<td><div class="form-group"><input type="text" class="form-control js-name"></div></td>';
+            newRow += '<td><div class="form-group"><select class="form-control js-priority"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div></td>';
+            newRow += '<td><div class="form-group"><input type="date" class="form-control js-deadline"></div></td>';
+            newRow += '<td><div class="form-group"><select class="form-control js-status"><option value="1">Undone</option><option value="2">Done</option></select></div></td>';
+            newRow += '<td><a href="#" class="btn btn-primary js-task-create">Create</a><a href="#" class="btn btn-warning js-task-cancel">Cancel</a></td></tr>';
+            $(newRow).appendTo('tbody');
+        });
+
+        // Delete new task form
+        $("tbody").on('click', '.js-task-cancel', function(e){
+            e.preventDefault();
+            $(this).closest('tr').fadeOut(500, function(){$(this).remove();});
+        });
+
+        // Create new task
+        $("tbody").on('click', '.js-task-create', function(e){
+            e.preventDefault();
+            // Get input values
+            var inputs = {};
+            var taskRow = $(this).closest('tr');
+            inputs['name'] = taskRow.find('.js-name').val();
+            inputs['priority'] = taskRow.find('.js-priority option:selected').val();
+            inputs['deadline'] = taskRow.find('.js-deadline').val();
+            inputs['status'] = taskRow.find('.js-status option:selected').val();
+            inputs['list_id'] = '<?php echo $listData['id']; ?>';
+
+            console.log(inputs);
+            $.post(
+                '/task-create',
+                {inputs : inputs},
+                function(data) {
+                    if (data !== false) {
+                        // Create task row and insert it instead of forms
+                        var newRow = '<td class="hidden">' + data.taskId + '</td>';
+                        newRow += '<td class="table-task-id">999</td>';
+                        newRow += '<td>' + data.name + '</td>';
+                        newRow += '<td>' + data.priority + '</td>';
+                        newRow += '<td>' + data.deadline + '</td>';
+                        newRow += '<td>' + ((data.status==2) ? 'Done' : 'Undone') + '</td>';
+                        newRow += '<td>' + ((data.status==2) ? '' : data.days) + '</td>';
+                        newRow += '<td class="action-icons">';
+                        newRow += '<a href="/task-edit/' + data.taskId + '"><span class="action-icon"><i class="fa fa-pencil-square-o"></i></span></a>';
+                        newRow += '<a href="/task-delete/' + data.taskId + '"><span class="action-icon"><i class="fa fa-times"></i></span></a>';
+                        newRow += '</td>';
+                        $(taskRow).html(newRow);
+                        sortTableIds();
+                        // Update list data
+                        $('.js-tasks').html(data.tasks);
+                        $('.js-undone').html(data.undone);
+                        $('.js-completed').html(data.completed);
+                    } else {
+                        $('.js-ajax-info').find('p').html('Task create error.').closest('.js-ajax-info').fadeIn().delay(2000).fadeOut();
+                    }
+                },
+                'json'
+            );
+        });
+
+        // Action icons behaviour
+        $('tbody').on('click', '.action-icon', function(e){
+            // List delete confirmation
+            e.preventDefault();
+            var row = $(this).closest('tr');
+            var href = $(this).parent().attr('href');
+            if(href.indexOf('del')>=0){
+                // If delete clicked
+                if(confirm("Delete this list?")){
+                    $.get(href, function(data){
+                        if(data.success===false){
+                            $('.js-ajax-info').find('p').html('Task delete error.').closest('.js-ajax-info').fadeIn().delay(2000).fadeOut();
+                        } else {
+                            // Update list data
+                            $('.js-tasks').html(data.tasks);
+                            $('.js-undone').html(data.undone);
+                            $('.js-completed').html(data.completed);
+                            row.fadeOut(500, function(){$(this).remove();sortTableIds();});
+                            $('.js-ajax-info').find('p').html('Task successfully deleted.').closest('.js-ajax-info').fadeIn().delay(2000).fadeOut();
+                        }
+                    }, 'json');
+                }
+            } else if(href.indexOf('edit')>=0){
+                // If edit clicked
+                var rowIndex = $('.table-task-id', row).html();
+                $('tbody > tr').each(function(index){
+                    var thisRow = $(this);
+                    // Edit only clicked row
+                    if(rowIndex==(index+1)){
+                        // Global scope var rowHtml (will be used in cancel update)
+                        rowHtml = $(this).html();
+                        var taskId = $(this).find('td').eq(0).html();
+                        // Pull task data from database
+                        $.get('/task-edit/'+taskId, function(task){
+                            // Transform existing row into row with input fields and values
+                            var rowEditHtml = '<td class="hidden">'+taskId+'</td><td>'+rowIndex+'</td>';
+                            rowEditHtml += '<td><div class="form-group"><input type="text" class="form-control js-name" value="'+task.name+'"></div></td>';
+                            rowEditHtml += '<td><div class="form-group"><select class="form-control js-priority">';
+                            rowEditHtml += '<option value="low" '+((task.priority=='low') ? 'selected' : '')+'>Low</option>';
+                            rowEditHtml += '<option value="medium" '+((task.priority=='medium') ? 'selected' : '')+'>Medium</option>';
+                            rowEditHtml += '<option value="high" '+((task.priority=='high') ? 'selected' : '')+'>High</option></select></div></td>';
+                            rowEditHtml += '<td><div class="form-group"><input type="date" class="form-control js-deadline" value="'+task.deadline+'"></div></td>';
+                            rowEditHtml += '<td><div class="form-group"><select class="form-control js-status">';
+                            rowEditHtml += '<option value="1" '+((task.status==1) ? 'selected' : '')+'>Undone</option>';
+                            rowEditHtml += '<option value="2" '+((task.status==2) ? 'selected' : '')+'>Done</option></select></div></td>';
+                            rowEditHtml += '<td><a href="#" class="btn btn-primary js-task-update">Update</a><a href="#" class="btn btn-warning js-task-update-cancel">Cancel</a></td>';
+                            $(thisRow).html(rowEditHtml);
+                        }, 'json');
+                    }
+                });
+            } else {
+                // Future improvements (like /task-done directly from actions etc.)
+            }
+        });
+
+        // Update task
+        $("tbody").on('click', '.js-task-update', function(e){
+            e.preventDefault();
+            // Get input values
+            var inputs = {};
+            var taskRow = $(this).closest('tr');
+            inputs['taskId'] = $(taskRow).find('td').eq(0).html();
+            inputs['name'] = taskRow.find('.js-name').val();
+            inputs['priority'] = taskRow.find('.js-priority option:selected').val();
+            inputs['deadline'] = taskRow.find('.js-deadline').val();
+            inputs['status'] = taskRow.find('.js-status option:selected').val();
+            $.post(
+                '/task-edit/'+inputs.taskId,
+                {inputs : inputs},
+                function(data){
+                    if (data !== false) {
+                        // Create task row and insert it instead of forms
+                        var editedRow = '<td class="hidden">' + data.taskId + '</td>';
+                        editedRow += '<td class="table-task-id">999</td>';
+                        editedRow += '<td>' + data.name + '</td>';
+                        editedRow += '<td>' + data.priority + '</td>';
+                        editedRow += '<td>' + data.deadline + '</td>';
+                        editedRow += '<td>' + ((data.status==1) ? 'Undone' : 'Done') + '</td>';
+                        editedRow += '<td>' + ((data.status==1) ? data.days : '') + '</td>';
+                        editedRow += '<td class="action-icons">';
+                        editedRow += '<a href="/task-edit/' + data.taskId + '"><span class="action-icon"><i class="fa fa-pencil-square-o"></i></span></a>';
+                        editedRow += '<a href="/task-delete/' + data.taskId + '"><span class="action-icon"><i class="fa fa-times"></i></span></a>';
+                        editedRow += '</td>';
+                        $(taskRow).html(editedRow);
+                        sortTableIds();
+                        // Update list data
+                        $('.js-tasks').html(data.tasks);
+                        $('.js-undone').html(data.undone);
+                        $('.js-completed').html(data.completed);
+                    } else {
+                        $('.js-ajax-info').find('p').html('Task update error.').closest('.js-ajax-info').fadeIn().delay(2000).fadeOut();
+                    }
+                },
+                'json'
+            );
+        });
+
+        // Cancel update task
+        $("tbody").on('click', '.js-task-update-cancel', function(e){
+            e.preventDefault();
+            var taskRow = $(this).closest('tr');
+            $(taskRow).html(rowHtml);
+        });
+
+
+        // Re-sort table items ids (these are not database ids)
+        function sortTableIds(){
+            $('tbody > tr').each(function(index){
+                $('.table-task-id', this).html(index+1);
+            });
+        }
+
+        // Delete list behaviour
+        $('.js-list-delete').on('click', function(e){
+            // List delete confirmation
+            e.preventDefault();
+            var href = $(this).attr('href');
+            if(confirm("Delete this list?")) {
+                $.get(href, function (data) {
+                    if (data.success) {
+                        // Delete successful
+                        window.location = '/';
+                    } else {
+                        // Delete unsuccessful
+                        $('.js-ajax-info').find('p').html('List delete error.').closest('.js-ajax-info').fadeIn().delay(2000).fadeOut();
+                    }
+                }, 'json');
+            }
+        });
+
+
+        // Sorting behaviour
+        var sortPicker = $('#sort-by');
+        sortPicker.on('change', function(){
+            var columnName = $('option:selected', sortPicker).val();
+            $.get('/list-edit-sort/' + columnName + '-<?php echo $listData['id']; ?>', function(data){
+                $('tbody').html(data);
+            });
+        });
+
+    });
+</script>
+
+

@@ -1,0 +1,146 @@
+@extends->layout
+
+@section->main_content
+
+<div class="row">
+    <div class="col-xs-10 col-md-10 col-lg-8 col-xs-offset-1 col-md-offset-1 col-lg-offset-2">
+        <div class="big-title">
+            <p>TODO Lists</p>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-xs-10 col-md-10 col-lg-8 col-xs-offset-1 col-md-offset-1 col-lg-offset-2">
+        <div class="form-group pull-right">
+            <label for="sort-by">Sort by:</label>
+            <select class="form-control" id="sort-by">
+                <option value="name">Name</option>
+                <option value="created_at">Created</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+
+<div class="row row-centered">
+    <div class="col-xs-10 col-md-10 col-lg-8 col-xs-offset-1 col-md-offset-1 col-lg-offset-2 col-centered">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Created</th>
+                        <th>Tasks</th>
+                        <th>Undone</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if(isset($lists)){ ?>
+                        <?php $listId = 1; ?>
+                        <?php foreach ($lists as $list) { ?>
+                            <tr>
+                                <td class="table-list-id"><?php echo $listId; ?></td>
+                                <td><?php echo $list['name']; ?></td>
+                                <td><?php echo $list['created_at']; ?></td>
+                                <td><?php echo (isset($list['tasks'])) ? count($list['tasks']) : 0; ?></td>
+                                <td>
+                                    <?php
+                                        echo (isset($list['tasks'])) ? $undone = count(array_keys($list['tasks'], 1)) : 0;
+                                    ?>
+                                </td>
+                                <td class="action-icons">
+                                    <a href="/list-edit/<?php echo $list['id']; ?>">
+                                        <span class="action-icon">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </span class="action-icon">
+                                    </a>
+                                    <a href="/list-delete/<?php echo $list['id']; ?>">
+                                        <span class="action-icon">
+                                            <i class="fa fa-times"></i>
+                                        </span>
+                                    </a>
+                                </td>
+                            </tr>
+                            <?php $listId++; ?>
+                        <?php } // end foreach ?>
+                    <?php } // end if ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<div class="row row-centered">
+    <div class="col-xs-10 col-md-10 col-lg-8 col-xs-offset-1 col-md-offset-1 col-lg-offset-2 col-centered">
+        <a href="/list-create" class="btn btn-primary">Create list</a>
+    </div>
+</div>
+
+
+<div class="row row-centered js-list-del" style="display: none;">
+    <div class="col-xs-10 col-md-6 col-lg-4 col-xs-offset-1 col-md-offset-3 col-lg-offset-4 col-centered">
+        <div class="alert alert-info">
+            <p></p>
+        </div>
+    </div>
+</div>
+
+<?php //echo '<pre>'; print_r($lists); echo '</pre>'; ?>
+
+
+@section->footer_scripts
+
+<script type="text/javascript">
+    $(function(){
+
+        // Action icons behaviour
+        $(".action-icons").on('click', '.action-icon', function(e){
+            // List delete confirmation
+            e.preventDefault();
+            var row = $(this).closest('tr');
+            var href = $(this).parent().attr('href');
+            if(href.indexOf('del')>=0){
+                if(confirm("Delete this list?")){
+                    $.get(href, function(data){
+                        console.log(data);
+                        if(data.success){
+                            // Delete successful
+                            row.fadeOut(500, function(){$(this).remove();sortTableIds();});
+                            $('.js-list-del').find('p').html('List successfully deleted.').closest('.js-list-del').fadeIn().delay(2000).fadeOut();
+                        } else {
+                            // Delete unsuccessful
+                            $('.js-list-del').find('p').html('List delete error.').closest('.js-list-del').fadeIn().delay(2000).fadeOut();
+                        }
+                    }, 'json');
+                }
+            } else {
+                // Any other uri but delete
+                window.location = href;
+            }
+        });
+
+
+        // Sorting behaviour
+        var sortPicker = $('#sort-by');
+        sortPicker.on('change', function(){
+            var sortByValue = $('option:selected', sortPicker).val();
+            $.get('/dashboard-sort/' + sortByValue, function(data){
+                $('tbody').html(data);
+            });
+        });
+
+
+        // Re-sort table items ids (these are not database ids)
+        function sortTableIds(){
+            $('tbody > tr').each(function(index){
+                $('.table-list-id', this).html(index+1);
+            });
+        }
+
+    });
+</script>

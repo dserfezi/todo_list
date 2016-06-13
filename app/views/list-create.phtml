@@ -1,0 +1,44 @@
+@extends->layout
+
+@section->main_content
+
+<div class="row row-centered">
+    <div class="col-xs-10 col-md-6 col-lg-4 col-xs-offset-1 col-md-offset-3 col-lg-offset-4 col-centered">
+        <div class="big-title">
+            <div class="big-title-content">Create new list</div>
+        </div>
+    </div>
+</div>
+
+
+<?php // Print all form messages ?>
+<?php if(isset($_SESSION['messageBag'])){ ?>
+    <div class="row row-centered">
+        <div class="col-xs-10 col-md-6 col-lg-4 col-xs-offset-1 col-md-offset-3 col-lg-offset-4 col-centered">
+            <div class="alert alert-danger">
+                <?php
+                foreach ($_SESSION['messageBag'] as $message) {
+                    echo '<p>' . $message . '</p>';
+                }
+                ?>
+            </div>
+        </div>
+    </div>
+<?php } // end isset messageBag ?>
+<?php unset($_SESSION['messageBag']); ?>
+
+
+<div class="row row-centered">
+    <div class="col-xs-10 col-md-6 col-lg-4 col-xs-offset-1 col-md-offset-3 col-lg-offset-4 col-centered">
+        <form action="/list-create" method="post">
+            <div class="form-group">
+                <label for="name">List name</label>
+                <input type="text" name="name" id="name" class="form-control" value="<?php echo isset($_SESSION['name']) ? $_SESSION['name'] : ''; unset($_SESSION['name']); ?>">
+            </div>
+            <div class="text-center">
+                <input type="submit" value="Create" class="btn btn-primary">
+                <a href="/" class="btn btn-warning">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
